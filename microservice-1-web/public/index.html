@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Notes - GCS & Microservices</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="container header-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">Cloud Notes</h1>
+          <p class="app-subtitle">Secure note taking powered by Google Cloud Storage and decoupled microservices</p>
+        </div>
+      </div>
+      <div class="architecture-pill">
+        <span class="pulse-indicator"></span>
+        <span class="pill-text">Microservices & IAM Enabled</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner / Toast -->
+  <div class="container">
+    <div id="statusAlert" class="alert hidden" role="alert">
+      <span id="alertIcon" class="alert-icon"></span>
+      <div id="alertMessage" class="alert-message"></div>
+      <button id="alertCloseBtn" class="alert-close" aria-label="Close message">&times;</button>
+    </div>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="container main-layout">
+    <!-- Left Column: Create Note Form -->
+    <section class="form-section">
+      <div class="card form-card">
+        <div class="card-header">
+          <h2 class="card-title">Create New Note</h2>
+          <p class="card-desc">Submissions are forwarded to Microservice 2 to store securely in GCS.</p>
+        </div>
+
+        <form id="noteForm" class="note-form" novalidate>
+          <div class="form-group">
+            <div class="label-row">
+              <label for="noteTitle" class="form-label">Note Title</label>
+              <span id="titleCount" class="char-count">0 / 150</span>
+            </div>
+            <input 
+              type="text" 
+              id="noteTitle" 
+              name="title" 
+              class="form-input" 
+              placeholder="e.g. Architecture Decisions for VM 1"
+              maxlength="150"
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="noteContent" class="form-label">Note Content</label>
+              <span id="contentCount" class="char-count">0 / 10000</span>
+            </div>
+            <textarea 
+              id="noteContent" 
+              name="content" 
+              class="form-textarea" 
+              placeholder="Write your note content here..."
+              rows="6"
+              maxlength="10000"
+              required
+            ></textarea>
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary">
+            <span class="btn-text">Save Note</span>
+            <span class="btn-spinner hidden" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <div class="architecture-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span><strong>Zero Direct Writes:</strong> VM 1 has read-only access. Saving triggers an HTTP POST to VM 2 (Service Account 2).</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Saved Notes List -->
+    <section class="notes-section">
+      <div class="notes-header">
+        <div>
+          <h2 class="section-title">Saved Notes</h2>
+          <p class="section-desc">Retrieved directly from Google Cloud Storage via Service Account 1</p>
+        </div>
+        <button id="refreshBtn" class="btn btn-secondary" title="Refresh notes list">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M21 21v-5h-5"/>
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="state-container hidden">
+        <div class="spinner"></div>
+        <p class="state-text">Loading notes from Google Cloud Storage...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="state-container empty-state hidden">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">No notes saved yet</h3>
+        <p class="empty-desc">Your Google Cloud Storage bucket is empty. Fill out the form on the left to create your first cloud note!</p>
+      </div>
+
+      <!-- Notes Grid -->
+      <div id="notesGrid" class="notes-grid"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <span>Cloud Notes App &bull; GCP Compute Engine &bull; Google Cloud Storage &bull; Docker Microservices</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

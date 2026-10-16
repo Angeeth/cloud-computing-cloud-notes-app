@@ -1,0 +1,20 @@
+{
+  "name": "cloud-notes-microservices",
+  "version": "1.0.0",
+  "description": "Cloud Notes App using Google Cloud Storage, Docker, and Microservices",
+  "scripts": {
+    "test": "node test-e2e.js",
+    "start:upload": "cd microservice-2-upload && node server.js",
+    "start:web": "cd microservice-1-web && node server.js"
+  },
+  "keywords": [
+    "gcp",
+    "google-cloud-storage",
+    "microservices",
+    "docker",
+    "compute-engine",
+    "iam"
+  ],
+  "author": "",
+  "license": "ISC"
+}
